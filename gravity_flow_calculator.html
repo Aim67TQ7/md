@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gravity Flow Rate Calculator - Metal Detectors</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.2em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 30px;
+      padding: 30px;
+    }
+
+    .calculator-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+      height: fit-content;
+    }
+
+    .results-section {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    .highlight-input {
+      background: #fff3cd !important;
+      border-color: #ffeaa7 !important;
+      box-shadow: 0 0 0 3px rgba(255, 234, 167, 0.3);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .data-source-toggle {
+      display: flex;
+      background: #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .data-option {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .data-option.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .output-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .output-label {
+      font-size: 0.9em;
+      color: #7f8c8d;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .output-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .lookup-table {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+
+    .lookup-table h3 {
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: center;
+      padding: 8px;
+      border: 1px solid #e9ecef;
+    }
+
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .current-row {
+      background: #e3f2fd !important;
+      font-weight: bold;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .info-section {
+      background: #e8f5e8;
+      border: 1px solid #c3e6c3;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-section h4 {
+      color: #2d5a2d;
+      margin-bottom: 8px;
+    }
+
+    .formula {
+      font-family: 'Courier New', monospace;
+      background: #f1f3f4;
+      padding: 5px 8px;
+      border-radius: 4px;
+      margin: 5px 0;
+      display: inline-block;
+    }
+
+    @media (max-width: 1024px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Gravity Flow Rate Calculator</h1>
+      <p>Converting Liters to Ft³ for Gravity Metal Detectors</p>
+      <small style="opacity: 0.8;">Based on GravityFlowMDCalculator Rev. 01/27/25</small>
+    </div>
+
+    <div class="main-content">
+      <div class="calculator-section">
+        <h2>📊 Calculator Inputs</h2>
+        
+        <div class="info-section">
+          <h4>🔧 How it Works</h4>
+          <p>Select an aperture size to get the flow rate in liters, then enter your material's bulk density. The calculator converts to ft³ and calculates mass flow rate.</p>
+          <div class="formula">Ft³ = Liters × 0.035315</div>
+          <div class="formula">lb/hr = Ft³ × Bulk Density</div>
+        </div>
+
+        <div class="data-source-toggle">
+          <div class="data-option active" onclick="switchDataSource('new')">New Rates</div>
+          <div class="data-option" onclick="switchDataSource('original')">Original Data</div>
+        </div>
+
+        <div class="input-group">
+          <label for="aperture">🔘 Aperture Size (mm)</label>
+          <select id="aperture" onchange="updateCalculation()">
+            <option value="30">30 mm</option>
+            <option value="50">50 mm</option>
+            <option value="70">70 mm</option>
+            <option value="80">80 mm</option>
+            <option value="100" selected>100 mm</option>
+            <option value="120">120 mm</option>
+            <option value="150">150 mm</option>
+            <option value="200">200 mm</option>
+            <option value="250">250 mm</option>
+            <option value="300">300 mm</option>
+            <option value="350">350 mm</option>
+            <option value="400">400 mm</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="flowRateLiters">💧 Flow Rate in Liters</label>
+          <input type="number" id="flowRateLiters" readonly class="highlight-input" value="28000">
+          <small style="color: #666; margin-top: 5px; display: block;">
+            ⚡ Auto-populated based on aperture size
+          </small>
+        </div>
+
+        <div class="input-group">
+          <label for="bulkDensity">⚖️ Bulk Density (lb/ft³)</label>
+          <input type="number" id="bulkDensity" value="48" min="0.1" step="0.1" class="highlight-input" oninput="updateCalculation()">
+          <small style="color: #666; margin-top: 5px; display: block;">
+            💡 Examples: Steel (30 lb/ft³), Sand (100 lb/ft³), Grain (35-50 lb/ft³)
+          </small>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="output-card">
+          <div class="output-label">📐 Equivalent in Ft³</div>
+          <div class="output-value" id="equivalentFt3">988.82</div>
+        </div>
+
+        <div class="output-card">
+          <div class="output-label">⚡ Capacity (lb/hr)</div>
+          <div class="output-value" id="capacityLbHr">47,463.36</div>
+        </div>
+
+        <div class="lookup-table">
+          <h3>📋 Gravity MD Calculation Table</h3>
+          <table id="lookupTable">
+            <thead>
+              <tr>
+                <th>Aperture Size (mm)</th>
+                <th>L</th>
+                <th>ft³/hr</th>
+                <th>BD (lb/ft³)</th>
+                <th>lb/hr</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Table will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="chart-container">
+          <div id="flowChart"></div>
+        </div>
+
+        <div class="chart-container">
+          <div id="comparisonChart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDataSource = 'new';
+    
+    // Data from Excel sheets
+    const apertureLitersMap = {
+      new: {
+        30: 1000, 50: 5000, 70: 10000, 80: 13000, 100: 28000,
+        120: 45000, 150: 70000, 200: 140000, 250: 230000,
+        300: 360000, 350: 510000, 400: 700000
+      },
+      original: {
+        30: 1000, 50: 2800, 70: 5500, 80: 7200, 100: 11200,
+        120: 16100, 150: 25200, 200: 44800, 250: 69900,
+        300: 100700, 350: 142000, 400: 196000
+      }
+    };
+
+    // Conversion factor from Excel
+    const LITERS_TO_FT3 = 0.035315;
+
+    function switchDataSource(source) {
+      currentDataSource = source;
+      const options = document.querySelectorAll('.data-option');
+      options.forEach((option, index) => {
+        option.classList.toggle('active', 
+          (source === 'new' && index === 0) || (source === 'original' && index === 1)
+        );
+      });
+      updateCalculation();
+    }
+
+    function updateCalculation() {
+      const aperture = parseInt(document.getElementById('aperture').value);
+      const bulkDensity = parseFloat(document.getElementById('bulkDensity').value) || 0;
+      
+      // Get liters for selected aperture
+      const liters = apertureLitersMap[currentDataSource][aperture];
+      document.getElementById('flowRateLiters').value = liters.toLocaleString();
+      
+      // Calculate Ft³ (Excel formula: Liters * 0.035315)
+      const ft3 = liters * LITERS_TO_FT3;
+      document.getElementById('equivalentFt3').textContent = ft3.toFixed(2);
+      
+      // Calculate capacity (Excel formula: Ft³ * Bulk Density)
+      const capacityLbHr = ft3 * bulkDensity;
+      document.getElementById('capacityLbHr').textContent = capacityLbHr.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      
+      updateLookupTable(aperture, bulkDensity);
+      createFlowChart();
+      createComparisonChart();
+    }
+
+    function updateLookupTable(currentAperture, bulkDensity) {
+      const tableBody = document.getElementById('tableBody');
+      tableBody.innerHTML = '';
+      
+      const apertures = Object.keys(apertureLitersMap[currentDataSource]).map(Number);
+      
+      apertures.forEach(aperture => {
+        const liters = apertureLitersMap[currentDataSource][aperture];
+        const ft3hr = liters * LITERS_TO_FT3;
+        const lbhr = ft3hr * bulkDensity;
+        
+        const row = document.createElement('tr');
+        if (aperture === currentAperture) {
+          row.className = 'current-row';
+        }
+        
+        row.innerHTML = `
+          <td>${aperture}</td>
+          <td>${liters.toLocaleString()}</td>
+          <td>${ft3hr.toFixed(2)}</td>
+          <td>${bulkDensity.toFixed(1)}</td>
+          <td>${lbhr.toLocaleString('en-US', {maximumFractionDigits: 2})}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+
+    function createFlowChart() {
+      const apertures = Object.keys(apertureLitersMap[currentDataSource]).map(Number);
+      const bulkDensity = parseFloat(document.getElementById('bulkDensity').value) || 48;
+      const currentAperture = parseInt(document.getElementById('aperture').value);
+      
+      const litersData = apertures.map(a => apertureLitersMap[currentDataSource][a]);
+      const ft3Data = litersData.map(l => l * LITERS_TO_FT3);
+      const lbhrData = ft3Data.map(f => f * bulkDensity);
+      
+      const trace1 = {
+        x: apertures,
+        y: ft3Data,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Volume Flow Rate (ft³/hr)',
+        line: { color: '#667eea', width: 3 },
+        marker: { size: 8 }
+      };
+
+      const trace2 = {
+        x: apertures,
+        y: lbhrData,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Mass Flow Rate (lb/hr)',
+        yaxis: 'y2',
+        line: { color: '#764ba2', width: 3 },
+        marker: { size: 8 }
+      };
+
+      // Highlight current selection
+      const currentIndex = apertures.indexOf(currentAperture);
+      const highlight = {
+        x: [currentAperture],
+        y: [ft3Data[currentIndex]],
+        type: 'scatter',
+        mode: 'markers',
+        name: 'Current Selection',
+        marker: { size: 15, color: '#e74c3c', symbol: 'diamond' }
+      };
+
+      const layout = {
+        title: {
+          text: `Flow Rates vs Aperture Size (${currentDataSource === 'new' ? 'New Rates' : 'Original Data'})`,
+          font: { size: 16 }
+        },
+        xaxis: { title: 'Aperture Size (mm)' },
+        yaxis: { 
+          title: 'Volume Flow Rate (ft³/hr)',
+          titlefont: { color: '#667eea' },
+          tickfont: { color: '#667eea' }
+        },
+        yaxis2: {
+          title: 'Mass Flow Rate (lb/hr)',
+          titlefont: { color: '#764ba2' },
+          tickfont: { color: '#764ba2' },
+          overlaying: 'y',
+          side: 'right'
+        },
+        showlegend: true,
+        legend: { x: 0.02, y: 0.98 }
+      };
+
+      Plotly.newPlot('flowChart', [trace1, trace2, highlight], layout, {
+        responsive: true,
+        displayModeBar: false
+      });
+    }
+
+    function createComparisonChart() {
+      const apertures = Object.keys(apertureLitersMap.new).map(Number);
+      
+      const newLiters = apertures.map(a => apertureLitersMap.new[a]);
+      const originalLiters = apertures.map(a => apertureLitersMap.original[a]);
+      
+      const trace1 = {
+        x: apertures,
+        y: newLiters,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'New Rates (Liters)',
+        line: { color: '#e74c3c', width: 3 }
+      };
+
+      const trace2 = {
+        x: apertures,
+        y: originalLiters,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Original Data (Liters)',
+        line: { color: '#3498db', width: 3 }
+      };
+
+      const layout = {
+        title: {
+          text: 'Data Comparison: New Rates vs Original Data',
+          font: { size: 16 }
+        },
+        xaxis: { title: 'Aperture Size (mm)' },
+        yaxis: { title: 'Flow Rate (Liters)' },
+        showlegend: true,
+        legend: { x: 0.02, y: 0.98 }
+      };
+
+      Plotly.newPlot('comparisonChart', [trace1, trace2], layout, {
+        responsive: true,
+        displayModeBar: false
+      });
+    }
+
+    // Initialize calculator
+    window.onload = function() {
+      updateCalculation();
+    };
+  </script>
+</body>
+</html>
